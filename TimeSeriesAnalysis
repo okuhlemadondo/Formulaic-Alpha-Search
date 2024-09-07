@@ -1,0 +1,574 @@
+# %% [code]
+# %% [code]
+# %% [code]
+import numpy as np
+import random
+from scipy.stats import moment
+from sklearn.preprocessing import Binarizer
+import scipy.stats as stats
+
+
+# ===========================
+# Statistical Functions
+# ===========================
+    
+
+def variance(data, window_size, partition_size):
+    """
+    Computes the variance within sliding windows over each partition of the input data.
+
+    Parameters:
+    data (numpy.ndarray): The input 1D array for which to compute variance.
+    window_size (int): The size of the sliding window.
+    partition_size (int): The size of each partition that divides the input data.
+
+    Returns:
+    numpy.ndarray: A 1D array of variances calculated for each partition.
+    """
+    file_length = len(data)
+    var = []
+
+    for index in range(0, file_length, partition_size):
+        partition_start = max(0, index - window_size + 1)
+        end_index = min(index + partition_size, file_length)
+        windows = np.lib.stride_tricks.sliding_window_view(data[partition_start:end_index], window_shape=(window_size,))
+        variances = np.var(windows, axis=1)
+        var.extend(variances)
+
+    return np.array(var)
+
+
+
+def median(data, window_size, partition_size):
+    """
+    Computes the median of the data within sliding windows over each partition of the input data.
+
+    Parameters:
+    data (numpy.ndarray): The input 1D array for which to compute medians.
+    window_size (int): The size of the sliding window.
+    partition_size (int): The size of each partition that divides the input data.
+
+    Returns:
+    numpy.ndarray: A 1D array of medians calculated for each partition of the data.
+    """
+    file_length = len(data)
+    med = []
+
+    for index in range(0, file_length, partition_size):
+        partition_start = max(0, index - window_size + 1)
+        end_index = min(index + partition_size, file_length)
+        windows = np.lib.stride_tricks.sliding_window_view(data[partition_start:end_index], window_shape=(window_size,))
+        median_values = np.median(windows, axis=1)
+        med.extend(median_values)
+
+    return np.array(med)
+
+
+
+def skewness(data, window_size, partition_size):
+    """
+    Computes the skewness of the data within sliding windows over each partition.
+
+    Parameters:
+    data (numpy.ndarray): The input 1D array for which to compute skewness.
+    window_size (int): The size of the sliding window.
+    partition_size (int): The size of each partition that divides the input data.
+
+    Returns:
+    numpy.ndarray: A 1D array of skewness values for each partition.
+    """
+    length = len(data)
+    skew = []
+
+    for index in range(0, length, partition_size):
+        partition_start = max(0, index - window_size + 1)
+        end_index = min(index + partition_size, length)
+        windows = np.lib.stride_tricks.sliding_window_view(data[partition_start:end_index], window_shape=(window_size,))
+        skewness_values = stats.skew(windows, axis=1)
+        skew.extend(skewness_values)
+
+    return np.array(skew)
+
+
+
+def fishers_kurtosis(data, window_size, partition_size):
+    """
+    Computes Fisher's kurtosis of the data within sliding windows over each partition.
+
+    Parameters:
+    data (numpy.ndarray): The input 1D array for which to compute Fisher's kurtosis.
+    window_size (int): The size of the sliding window.
+    partition_size (int): The size of each partition that divides the input data.
+
+    Returns:
+    numpy.ndarray: A 1D array of Fisher's kurtosis values for each partition.
+    """
+    length = len(data)
+    kurts = []
+
+    for index in range(0, length, partition_size):
+        partition_start = max(0, index - window_size + 1)
+        end_index = min(index + partition_size, length)
+        windows = np.lib.stride_tricks.sliding_window_view(data[partition_start:end_index], window_shape=(window_size,))
+        kurtosis_values = stats.kurtosis(windows, fisher=True, axis=1)
+        kurts.extend(kurtosis_values)
+
+    return np.array(kurts)
+
+
+
+def pearsons_kurtosis(data, window_size, partition_size):
+    """
+    Computes Pearson's kurtosis of the data within sliding windows over each partition.
+
+    Parameters:
+    data (numpy.ndarray): The input 1D array for which to compute Pearson's kurtosis.
+    window_size (int): The size of the sliding window.
+    partition_size (int): The size of each partition that divides the input data.
+
+    Returns:
+    numpy.ndarray: A 1D array of Pearson's kurtosis values for each partition.
+    """
+    length = len(data)
+    kurts = []
+
+    for index in range(0, length, partition_size):
+        partition_start = max(0, index - window_size + 1)
+        end_index = min(index + partition_size, length)
+        windows = np.lib.stride_tricks.sliding_window_view(data[partition_start:end_index], window_shape=(window_size,))
+        kurtosis_values = stats.kurtosis(windows, fisher=False, axis=1)
+        kurts.extend(kurtosis_values)
+
+    return np.array(kurts)
+
+
+# ===========================
+# Transformation Functions
+# ===========================
+
+
+def count_in_range(lst, min_val, max_val):
+    """
+    Counts the number of elements in a list that fall within a specified range, inclusive.
+
+    Parameters:
+    lst (list or numpy.ndarray): The input list or array of values to evaluate.
+    min_val (numeric): The minimum value of the range.
+    max_val (numeric): The maximum value of the range.
+
+    Returns:
+    int: The number of elements in the list that lie within the specified range.
+    """
+    # Use a generator expression to count elements in the specified range
+    return sum(min_val <= val <= max_val for val in lst)
+    
+    
+    
+def count_equal_elements(arr1, arr2):
+    """
+    Counts the number of elements that are equal between two arrays element-wise. 
+    Both arrays must have the same shape.
+
+    Parameters:
+    arr1 (numpy.ndarray): The first input array.
+    arr2 (numpy.ndarray): The second input array.
+
+    Returns:
+    int: The number of elements that are equal between the two arrays.
+
+    Raises:
+    ValueError: If the input arrays do not have the same shape.
+    """
+    # Ensure that the two arrays have the same shape
+    if arr1.shape != arr2.shape:
+        raise ValueError("Arrays must have the same shape.")
+
+    # Create a boolean mask for element-wise equality and count True values
+    equivalent_mask = arr1 == arr2
+    count = np.sum(equivalent_mask)
+
+    return count
+
+
+
+def differences(data, lag):
+    """
+    Computes the lagged differences of the data.
+
+    Parameters:
+    data (numpy.ndarray): The input 1D array for which to compute differences.
+    lag (int): The lag value (number of steps) for computing differences.
+
+    Returns:
+    numpy.ndarray: A 1D array of lagged differences.
+    """
+    differences = np.concatenate((np.zeros(lag), np.array([data[i] - data[i - lag] for i in range(lag, len(data))])))
+    return differences
+
+
+
+def discretizer(X, num_bins, encode, strategy, datatype):
+    """
+    Discretizes continuous data into bins using the `KBinsDiscretizer`. This method transforms 
+    each feature of the dataset into discrete values according to the specified number of bins, 
+    encoding method, and binning strategy.
+
+    Parameters:
+    X (numpy.ndarray or pandas.DataFrame): The input data to be discretized.
+    num_bins (int): The number of bins to discretize the data into.
+    encode (str): The method used to encode the binarized data. Possible values are 'onehot', 
+                  'onehot-dense', 'ordinal'.
+    strategy (str): The binning strategy to use. Possible values are 'uniform', 'quantile', or 'kmeans'.
+    datatype (type): The data type for the transformed data (e.g., `np.float32`, `np.float64`).
+
+    Returns:
+    numpy.ndarray or scipy.sparse matrix: The discretized version of the input data.
+    """
+    # Create a KBinsDiscretizer object with the given parameters
+    enc = KBinsDiscretizer(n_bins=num_bins, encode=encode, strategy=strategy, dtype=datatype)
+    
+    # Fit the discretizer to the data and transform it
+    X_discretized = enc.fit_transform(X)
+    
+    return X_discretized
+
+
+
+def binarizer(X):
+    """
+    Binarizes the data such that all values above the threshold are set to 1, 
+    and all values below or equal to the threshold are set to 0. The default threshold is 0.
+
+    Parameters:
+    X (numpy.ndarray or pandas.DataFrame): The input data to be binarized.
+
+    Returns:
+    numpy.ndarray: The binarized version of the input data, with values set to either 0 or 1.
+    """
+    # Create a Binarizer object with the default threshold of 0
+    transformer = Binarizer()
+    
+    # Transform the input data by binarizing it
+    X_binarized = transformer.transform(X)
+    
+    return X_binarized
+
+
+
+def count_ratio(arr):
+    """
+    Computes a scaled ratio of positive values in the input array.
+    The ratio is scaled to be between -1 and 1 using the formula:
+    ratio = 2 * ((count - min_) / (max_ - min_)) - 1
+
+    Parameters:
+    arr (numpy.ndarray): The input 1D array for which to calculate the ratio of positive values.
+
+    Returns:
+    float: The scaled ratio of positive values in the input array, ranging from -1 to 1.
+    """
+    # Count the number of positive values in the array
+    count = np.sum(arr > 0)
+
+    # Define the minimum and maximum possible counts
+    min_ = 0
+    max_ = len(arr)
+
+    # Compute the scaled ratio
+    ratio = (2 * ((count - min_) / (max_ - min_))) - 1
+
+    return ratio
+
+
+
+def count_ratios(arr, window_size):
+    """
+    Computes the scaled ratio of positive values for each sliding window within the input array.
+    This function applies the `count_ratio` function to each sliding window.
+
+    Parameters:
+    arr (numpy.ndarray): The input 1D array for which to calculate ratios of positive values.
+    window_size (int): The size of each sliding window.
+
+    Returns:
+    list: A list of scaled ratios for each sliding window, ranging from -1 to 1.
+    """
+    # Create sliding windows using sliding_window_view
+    windows = np.lib.stride_tricks.sliding_window_view(arr, window_shape=(window_size,))
+
+    # Apply count_ratio to each window and return the results as a list
+    results = np.apply_along_axis(count_ratio, axis=1, arr=windows)
+
+    return list(results)
+    
+
+    
+def lagged_difference_matrix(array, min_lag, lag_step, num_lags):
+    """
+    Creates a lagged difference matrix where each row corresponds to differences 
+    in the original array for increasing lag values.
+    
+    Parameters:
+    array (numpy.ndarray): Input 1D array to compute lagged differences.
+    min_lag (int): The smallest lag value to apply.
+    lag_step (int): The step size between consecutive lag values.
+    num_lags (int): The number of different lag values to use.
+    
+    Returns:
+    numpy.ndarray: A 2D matrix where each row contains lagged differences 
+                   for a specific lag value.
+    """
+    lagged_diffs = []
+    
+    # Precompute total lags range to avoid recomputation in the loop
+    for lag in range(min_lag, min_lag + num_lags * lag_step, lag_step):
+        # Compute lagged differences and pad with zeros for alignment
+        lagged_difference = np.pad(array[lag:] - array[:-lag], (lag, 0), mode='constant', constant_values=0)
+        lagged_diffs.append(lagged_difference)
+    
+    # Stack the list of lagged differences into a 2D matrix
+    stacked_array = np.vstack(lagged_diffs)
+    
+    return stacked_array
+    
+    
+    
+def lgd_to_poly_coeffs(LGD, degree):
+    """
+    Fits a polynomial to each column of the lagged difference matrix (LGD) 
+    and returns the polynomial coefficients.
+    
+    Parameters:
+    LGD (numpy.ndarray): A 2D matrix where each row corresponds to a lagged difference vector.
+    degree (int): The degree of the polynomial to fit.
+    
+    Returns:
+    numpy.ndarray: A 2D array where each row contains the coefficients 
+                   of the fitted polynomial for each lagged difference vector.
+    """
+    # Generate time indices based on the number of lags (i.e., columns of LGD)
+    time = np.arange(LGD.shape[1])
+    
+    # Fit a polynomial of the specified degree to each lagged difference vector
+    coeffs = np.polyfit(time, LGD.T, degree).T  # Transpose to fit across rows
+    
+    return coeffs
+
+
+def sliding_window(matrix, window_size):
+    """
+    Transforms the first axis of a numpy matrix into sliding windows of a given size.
+    
+    Parameters:
+    matrix (numpy.ndarray): The input matrix.
+    window_size (int): The size of each sliding window.
+    
+    Returns:
+    numpy.ndarray: A new matrix with sliding windows along the first axis.
+    """
+    if window_size > matrix.shape[0]:
+        raise ValueError("Window size cannot be larger than the first axis dimension.")
+    
+    return np.lib.stride_tricks.sliding_window_view(matrix, window_shape=(window_size,) + matrix.shape[1:])
+
+
+# ================================
+# Central Tendency and Residuals
+# ================================
+
+
+def arithmetic_mean(data, window_size):
+    """
+    Computes the arithmetic mean (simple moving average) over a sliding window.
+
+    Parameters:
+    data (numpy.ndarray): The input 1D array for which to compute the arithmetic mean.
+    window_size (int): The size of the sliding window.
+
+    Returns:
+    numpy.ndarray: A 1D array of the arithmetic mean values, padded with zeros for alignment.
+    """
+    # Create a convolution kernel with equal weights
+    kernel = np.ones(window_size) / window_size
+    sma = np.convolve(data, kernel, mode='valid')
+
+    # Prepend zeros to match the original data length
+    mean = np.concatenate((np.zeros(len(data) - len(sma)), sma))
+
+    return mean
+
+
+
+def arithmetic_mean_residuals(data, window_size):
+    """
+    Computes the residuals between the data and the arithmetic mean (simple moving average).
+
+    Parameters:
+    data (numpy.ndarray): The input 1D array for which to compute residuals.
+    window_size (int): The size of the sliding window used to compute the mean.
+
+    Returns:
+    numpy.ndarray: A 1D array of residuals (data - arithmetic mean).
+    """
+    kernel = np.ones(window_size) / window_size
+    sma = np.convolve(data, kernel, mode='valid')
+    padded_sma = np.concatenate((np.zeros(len(data) - len(sma)), sma))
+
+    # Adjust data length to match the SMA length
+    data_trimmed = data[len(data) - len(sma):]
+    residuals = data_trimmed - sma
+
+    return residuals
+
+
+
+def exponential_moving_average(signal, window_size, alpha):
+    """
+    Computes the Exponential Moving Average (EMA) of a given signal using an exponential kernel.
+
+    Parameters:
+    signal (numpy.ndarray): The input 1D array (signal) for which to compute the EMA.
+    window_size (int): The size of the window for the exponential kernel.
+    alpha (float): The decay rate (smoothing factor) of the exponential kernel.
+    
+    Returns:
+    numpy.ndarray: A 1D array containing the EMA of the signal. The output has the same length 
+                   as the input signal, with zeros prepended where the EMA could not be computed 
+                   due to the window size.
+    """
+    # Create the exponential kernel
+    kernel = np.exp(-alpha * np.arange(window_size))
+    
+    # Normalize the kernel to ensure the weights sum to 1
+    kernel /= kernel.sum()
+
+    # Apply convolution to compute the EMA (only valid convolution results)
+    ema = np.convolve(signal, kernel, mode='valid')
+
+    # Prepend zeros to align the EMA with the original signal's length
+    mean = np.concatenate((np.zeros(len(signal) - len(ema)), ema))
+
+    return mean
+
+
+
+def midpoint(data, window_size, partition_size):
+    """
+    Computes the midpoint for each partition of the input data. The midpoint is 
+    calculated as the average of the highest and lowest values within a sliding window, 
+    for each partition.
+
+    Parameters:
+    data (numpy.ndarray): The input 1D array of data to compute midpoints.
+    window_size (int): The size of the sliding window used to compute local maxima and minima.
+    partition_size (int): The size of each partition that divides the input data.
+
+    Returns:
+    numpy.ndarray: A 1D array of midpoints, with zeros prepended for alignment with the original data length.
+    """
+    file_length = len(data)
+    midpoint_list = []
+
+    # Iterate over the data in chunks defined by partition_size
+    for index in range(0, file_length, partition_size):
+        # Define the start and end indices for each partition with boundary checks
+        partition_start = max(0, index - window_size + 1)
+        end_index = min(index + partition_size, file_length)
+
+        # Extract sliding window views for computing the highest and lowest values
+        windowed_data = np.lib.stride_tricks.sliding_window_view(data[partition_start:end_index], window_shape=window_size)
+        
+        highest = np.max(windowed_data, axis=1)
+        lowest = np.min(windowed_data, axis=1)
+
+        # Compute the midpoint for the current partition
+        midpoint_partition = (highest + lowest) / 2
+        midpoint_list.extend(midpoint_partition)
+
+    # Add zeros at the beginning to match the original data length
+    zeros_to_add = [0] * (window_size - 1)
+    final_midpoints = zeros_to_add + midpoint_list
+
+    return np.array(final_midpoints)
+
+
+
+def midpoint_residuals(data, window_size, partition_size):
+    """
+    Computes the residuals between the input data and its midpoints. The midpoints are calculated 
+    using a sliding window over each partition of the data, and the residuals are obtained by 
+    subtracting the midpoint values from the original data.
+
+    Parameters:
+    data (numpy.ndarray): The input 1D array of data for which to compute residuals.
+    window_size (int): The size of the sliding window used to compute midpoints.
+    partition_size (int): The size of each partition that divides the input data.
+    
+    Returns:
+    numpy.ndarray: A 1D array of residuals, which is the difference between the original data 
+                   and the midpoint values computed by the midpoint filter.
+    """
+    # Compute the midpoints using the given window and partition size
+    midpoint_filter = midpoint(data, window_size, partition_size)
+    
+    # Compute the residuals by subtracting midpoints from the original data
+    residuals = data - midpoint_filter
+    
+    return residuals
+
+
+# ===========================
+# Stochastic Processes
+# ===========================
+    
+    
+def generate_symmetric_random_walk(num_samples, sampling_rate):
+    """
+    Generates a symmetric random walk (SRW) by sampling from a distribution 
+    of fixed increments (+0.1 and -0.1) and returning cumulative sums at the specified sampling rate.
+
+    Parameters:
+    num_samples (int): The number of samples (steps) to generate.
+    sampling_rate (int): The rate at which to sample the random walk (downsampling factor).
+
+    Returns:
+    numpy.ndarray: A 1D array representing the cumulative sum of the random walk,
+                   sampled at the specified sampling rate.
+    """
+    steps = np.random.choice([-0.1, 0.1], size=int(num_samples * sampling_rate))
+    return np.cumsum(steps)[::sampling_rate]
+
+
+
+def generate_gaussian_random_walk(std_deviation, num_data_points, sampling_rate):
+    """
+    Generates a Gaussian random walk (GRW) where increments are drawn from a normal distribution 
+    with mean 0 and specified standard deviation. The walk is sampled at the specified sampling rate.
+
+    Parameters:
+    std_deviation (float): The standard deviation of the normal distribution used for increments.
+    num_data_points (int): The number of data points to generate.
+    sampling_rate (int): The rate at which to sample the random walk (downsampling factor).
+
+    Returns:
+    numpy.ndarray: A 1D array representing the cumulative sum of the random walk,
+                   sampled at the specified sampling rate.
+    """
+    steps = np.random.normal(0, std_deviation, int(num_data_points * sampling_rate))
+    return np.cumsum(steps)[::sampling_rate]
+
+
+
+def total_increments(increments, start, end):
+    """
+    Calculates the total absolute increments of a random walk within a specified range.
+    
+    Parameters:
+    increments (numpy.ndarray): A 1D array of increments from a random walk.
+    start (int): The starting index of the range.
+    end (int): The ending index of the range.
+    
+    Returns:
+    float: The sum of absolute increments between the start and end indices.
+    """
+    return np.sum(np.abs(increments[start:end]))
