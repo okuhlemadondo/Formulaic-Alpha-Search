@@ -1,0 +1,20 @@
+import shutil
+!pip install 'shimmy>=0.2.1'
+!pip install stable_baselines3
+import stable_baselines3 as sb
+
+
+def load_sb_model(model_name):
+    # Specify the directory you want to zip
+    directory_to_zip = '/kaggle/input/'+model_name
+
+    # Specify the name of the zip file
+    zip_file_name = '/kaggle/working/'+model_name+'.zip'
+
+    # Create a zip file from the directory
+    shutil.make_archive(zip_file_name.split('.zip')[0], 'zip', directory_to_zip)
+
+    # The above line will create a zip file with the name 'your_zip_file_name.zip'
+    model = sb.DQN.load("/kaggle/working/"+model_name)
+    
+    return model
