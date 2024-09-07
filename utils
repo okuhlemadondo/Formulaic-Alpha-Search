@@ -1,5 +1,4 @@
 import shutil
-!pip install 'shimmy>=0.2.1'
 !pip install stable_baselines3
 import stable_baselines3 as sb
 
