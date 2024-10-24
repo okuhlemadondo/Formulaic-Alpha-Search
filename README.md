@@ -30,8 +30,8 @@ Alpha factors are mathematical expressions or models used in quantitative financ
 To get started with the codebase, clone the repository and install the necessary dependencies:
 
 ```bash
-git clone https://github.com/username/alpha-factor-research.git
-cd alpha-factor-research
+git clone https://github.com/okuhlemadondo/Formulaic-Alpha-Search.git
+cd Formulaic-Alpha-Search
 pip install -r requirements.txt
 ```
 
