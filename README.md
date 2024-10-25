@@ -34,9 +34,6 @@ cd Formulaic-Alpha-Search
 - Scipy
 - Matplotlib
 - Jupyter (for notebooks)
-- Custom Libraries (in `src/lib`):
-  - `stochastic_models`
-  - `alpha_generator`
 
 ## Contributing
 
