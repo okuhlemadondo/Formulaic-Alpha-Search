@@ -1,6 +1,7 @@
 # %% [code]
 # %% [code]
 # %% [code]
+# %% [code]
 import numpy as np
 import random
 from scipy.stats import moment
@@ -370,6 +371,32 @@ def sliding_window(matrix, window_size):
         raise ValueError("Window size cannot be larger than the first axis dimension.")
     
     return np.lib.stride_tricks.sliding_window_view(matrix, window_shape=(window_size,) + matrix.shape[1:])
+
+
+def calculate_elasticity(x, y):
+    """
+    Calculate the elasticity of array y with respect to array x.
+    
+    Parameters:
+        x (np.array): Independent variable array.
+        y (np.array): Dependent variable array.
+        
+    Returns:
+        np.array: Elasticity array.
+    """
+    # Compute the differences (Δx and Δy)
+    delta_x = np.diff(x)
+    delta_y = np.diff(y)
+    
+    # Compute the percentage changes (Δx/x and Δy/y)
+    # Use the original values (x[:-1] and y[:-1]) to avoid division by zero
+    percentage_change_x = delta_x / x[:-1]
+    percentage_change_y = delta_y / y[:-1]
+    
+    # Compute elasticity as the ratio of percentage changes
+    elasticity = percentage_change_y / percentage_change_x
+    
+    return elasticity
 
 
 # ================================
