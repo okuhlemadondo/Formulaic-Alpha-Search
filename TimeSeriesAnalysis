@@ -61,6 +61,8 @@ def median(data, window_size, partition_size):
         windows = np.lib.stride_tricks.sliding_window_view(data[partition_start:end_index], window_shape=(window_size,))
         median_values = np.median(windows, axis=1)
         med.extend(median_values)
+    padding = window_size - 1  # Pad only at the beginning
+    median = np.concatenate(([med[0]] * padding, med))
 
     return np.array(med)
 
@@ -425,60 +427,6 @@ def arithmetic_mean(data, window_size):
     return mean
 
 
-
-def arithmetic_mean_residuals(data, window_size):
-    """
-    Computes the residuals between the data and the arithmetic mean (simple moving average).
-
-    Parameters:
-    data (numpy.ndarray): The input 1D array for which to compute residuals.
-    window_size (int): The size of the sliding window used to compute the mean.
-
-    Returns:
-    numpy.ndarray: A 1D array of residuals (data - arithmetic mean).
-    """
-    kernel = np.ones(window_size) / window_size
-    sma = np.convolve(data, kernel, mode='valid')
-    padded_sma = np.concatenate((np.zeros(len(data) - len(sma)), sma))
-
-    # Adjust data length to match the SMA length
-    data_trimmed = data[len(data) - len(sma):]
-    residuals = data_trimmed - sma
-
-    return residuals
-
-
-
-def exponential_moving_average(signal, window_size, alpha):
-    """
-    Computes the Exponential Moving Average (EMA) of a given signal using an exponential kernel.
-
-    Parameters:
-    signal (numpy.ndarray): The input 1D array (signal) for which to compute the EMA.
-    window_size (int): The size of the window for the exponential kernel.
-    alpha (float): The decay rate (smoothing factor) of the exponential kernel.
-    
-    Returns:
-    numpy.ndarray: A 1D array containing the EMA of the signal. The output has the same length 
-                   as the input signal, with zeros prepended where the EMA could not be computed 
-                   due to the window size.
-    """
-    # Create the exponential kernel
-    kernel = np.exp(-alpha * np.arange(window_size))
-    
-    # Normalize the kernel to ensure the weights sum to 1
-    kernel /= kernel.sum()
-
-    # Apply convolution to compute the EMA (only valid convolution results)
-    ema = np.convolve(signal, kernel, mode='valid')
-
-    # Prepend zeros to align the EMA with the original signal's length
-    mean = np.concatenate((np.zeros(len(signal) - len(ema)), ema))
-
-    return mean
-
-
-
 def midpoint(data, window_size, partition_size):
     """
     Computes the midpoint for each partition of the input data. The midpoint is 
@@ -520,36 +468,12 @@ def midpoint(data, window_size, partition_size):
 
 
 
-def midpoint_residuals(data, window_size, partition_size):
-    """
-    Computes the residuals between the input data and its midpoints. The midpoints are calculated 
-    using a sliding window over each partition of the data, and the residuals are obtained by 
-    subtracting the midpoint values from the original data.
-
-    Parameters:
-    data (numpy.ndarray): The input 1D array of data for which to compute residuals.
-    window_size (int): The size of the sliding window used to compute midpoints.
-    partition_size (int): The size of each partition that divides the input data.
-    
-    Returns:
-    numpy.ndarray: A 1D array of residuals, which is the difference between the original data 
-                   and the midpoint values computed by the midpoint filter.
-    """
-    # Compute the midpoints using the given window and partition size
-    midpoint_filter = midpoint(data, window_size, partition_size)
-    
-    # Compute the residuals by subtracting midpoints from the original data
-    residuals = data - midpoint_filter
-    
-    return residuals
-
-
 # ===========================
 # Stochastic Processes
 # ===========================
     
     
-def generate_symmetric_random_walk(num_samples, sampling_rate):
+def symmetric_random_walk(length, sampling_rate):
     """
     Generates a symmetric random walk (SRW) by sampling from a distribution 
     of fixed increments (+0.1 and -0.1) and returning cumulative sums at the specified sampling rate.
@@ -562,12 +486,12 @@ def generate_symmetric_random_walk(num_samples, sampling_rate):
     numpy.ndarray: A 1D array representing the cumulative sum of the random walk,
                    sampled at the specified sampling rate.
     """
-    steps = np.random.choice([-0.1, 0.1], size=int(num_samples * sampling_rate))
+    steps = np.random.choice([-0.1, 0.1], size=int(length * sampling_rate))
     return np.cumsum(steps)[::sampling_rate]
 
 
 
-def generate_gaussian_random_walk(std_deviation, num_data_points, sampling_rate):
+def generate_gaussian_random_walk(std_deviation, length, sampling_rate):
     """
     Generates a Gaussian random walk (GRW) where increments are drawn from a normal distribution 
     with mean 0 and specified standard deviation. The walk is sampled at the specified sampling rate.
@@ -581,7 +505,7 @@ def generate_gaussian_random_walk(std_deviation, num_data_points, sampling_rate)
     numpy.ndarray: A 1D array representing the cumulative sum of the random walk,
                    sampled at the specified sampling rate.
     """
-    steps = np.random.normal(0, std_deviation, int(num_data_points * sampling_rate))
+    steps = np.random.normal(0, std_deviation, int(length * sampling_rate))
     return np.cumsum(steps)[::sampling_rate]
 
 
