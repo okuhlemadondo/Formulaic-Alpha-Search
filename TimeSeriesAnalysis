@@ -64,7 +64,7 @@ def median(data, window_size, partition_size):
     padding = window_size - 1  # Pad only at the beginning
     median = np.concatenate(([med[0]] * padding, med))
 
-    return np.array(med)
+    return np.array(median)
 
 
 
